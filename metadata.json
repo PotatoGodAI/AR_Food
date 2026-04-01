@@ -1,0 +1,7 @@
+{
+  "name": "AR Portal Engine",
+  "description": "A full-stack AR portal for uploading and viewing 3D models in augmented reality.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

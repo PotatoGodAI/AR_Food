@@ -1,0 +1,32 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidModel(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             (data.glbUrl == null || (data.glbUrl is string && data.glbUrl.size() > 0)) &&
+             (data.usdzUrl == null || (data.usdzUrl is string && data.usdzUrl.size() > 0)) &&
+             (data.glbUrl != null || data.usdzUrl != null) &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.createdAt is string;
+    }
+
+    match /models/{modelId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+    
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "entities": {
+    "Model": {
+      "title": "Model",
+      "description": "Metadata for a 3D model asset.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the model."
+        },
+        "glbUrl": {
+          "type": "string",
+          "description": "URL to the .glb file in Firebase Storage."
+        },
+        "usdzUrl": {
+          "type": "string",
+          "description": "URL to the .usdz file in Firebase Storage."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The UID of the user who uploaded the model."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the model was created."
+        }
+      },
+      "required": ["name", "glbUrl", "userId", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/models/{modelId}": {
+      "schema": "Model",
+      "description": "Collection of 3D models."
+    }
+  }
+}
