@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Box, Smartphone } from 'lucide-react';
 import '@google/model-viewer';
 
 declare module 'react' {
@@ -21,12 +21,9 @@ interface ModelData {
 
 export default function ARViewer() {
   const { modelId } = useParams();
-  const navigate = useNavigate();
   const modelViewerRef = useRef<any>(null);
   const [model, setModel] = useState<ModelData | null>(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     async function fetchModel() {
@@ -42,8 +39,6 @@ export default function ARViewer() {
       } catch (err) {
         console.error('FETCH_ERROR', err);
         setError('SYSTEM_ERROR');
-      } finally {
-        setLoading(false);
       }
     }
     fetchModel();
@@ -59,45 +54,19 @@ export default function ARViewer() {
     }
   };
 
-  useEffect(() => {
-    if (modelViewerRef.current && model) {
-      const viewer = modelViewerRef.current;
-      const onModelLoad = () => {
-        setIsLoaded(true);
-        // Try auto-activation (might be blocked)
-        setTimeout(() => {
-          handleActivateAR();
-        }, 1000);
-      };
-      viewer.addEventListener('load', onModelLoad);
-      return () => viewer.removeEventListener('load', onModelLoad);
-    }
-  }, [model]);
-
   if (error) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center bg-black font-mono text-red-500 p-4 text-center">
-        <p className="text-xs uppercase tracking-widest mb-4">{error}</p>
-        <button onClick={() => navigate('/')} className="brutalist-button text-white text-[10px] px-4 py-2">
-          RETURN_TO_BASE
-        </button>
+      <div className="flex h-screen items-center justify-center bg-black font-mono text-red-500">
+        <p className="text-xs uppercase tracking-widest">{error}</p>
       </div>
     );
   }
 
   return (
-    <div className="relative h-screen w-full bg-black overflow-hidden">
-      {loading && (
-        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black">
-          <Loader2 className="mb-2 animate-spin text-[#00ff00]" size={24} />
-          <p className="font-mono text-[8px] text-[#00ff00] uppercase tracking-[0.2em]">
-            INITIALIZING_PORTAL...
-          </p>
-        </div>
-      )}
-
+    <div className="relative h-screen w-full bg-black overflow-hidden flex items-center justify-center">
       {model && (
         <>
+          {/* Hidden Model Viewer - handles the AR logic */}
           <model-viewer
             ref={modelViewerRef}
             src={model.glbUrl}
@@ -109,32 +78,37 @@ export default function ARViewer() {
             shadow-intensity="1"
             environment-image="neutral"
             exposure="1"
-            style={{ width: '100%', height: '100%', backgroundColor: '#000' }}
+            style={{ position: 'absolute', width: '1px', height: '1px', opacity: 0 }}
           >
             <button slot="ar-button" className="hidden" />
           </model-viewer>
 
-          {/* Invisible trigger layer for user gesture */}
-          {!loading && isLoaded && (
-            <div 
-              onClick={handleActivateAR}
-              className="absolute inset-0 z-40 flex flex-col items-center justify-center cursor-pointer bg-black/10"
-            >
-              <div className="flex flex-col items-center animate-pulse pointer-events-none">
-                <p className="font-mono text-[10px] text-[#00ff00] uppercase tracking-[0.3em] mb-2">
-                  TAP_TO_LAUNCH_AR
-                </p>
-                <div className="h-[1px] w-12 bg-[#00ff00]/30" />
+          {/* Big Central Button */}
+          <button
+            onClick={handleActivateAR}
+            className="group relative flex flex-col items-center justify-center gap-6 p-12 transition-all active:scale-95"
+          >
+            <div className="relative">
+              <div className="absolute -inset-4 animate-pulse rounded-full border border-[#00ff00]/20 blur-xl" />
+              <div className="relative flex h-24 w-24 items-center justify-center border-2 border-[#00ff00] bg-black text-[#00ff00] shadow-[8px_8px_0px_rgba(0,255,0,0.3)] group-hover:shadow-[12px_12px_0px_rgba(0,255,0,0.5)] transition-all">
+                <Smartphone size={40} />
               </div>
             </div>
-          )}
+            
+            <div className="text-center">
+              <h2 className="font-mono text-2xl font-black uppercase tracking-tighter text-[#00ff00]">
+                VIEW_IN_AR
+              </h2>
+              <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.4em] text-gray-500">
+                INITIALIZE_PORTAL
+              </p>
+            </div>
 
-          {/* Minimal Back Button */}
-          <button
-            onClick={() => navigate('/')}
-            className="absolute top-6 left-6 z-50 flex h-8 w-8 items-center justify-center border border-[#333] bg-black/50 text-white backdrop-blur-sm hover:border-[#00ff00] hover:text-[#00ff00]"
-          >
-            <ArrowLeft size={16} />
+            {/* Decorative corner brackets */}
+            <div className="absolute top-0 left-0 h-4 w-4 border-t-2 border-l-2 border-[#00ff00]/30" />
+            <div className="absolute top-0 right-0 h-4 w-4 border-t-2 border-r-2 border-[#00ff00]/30" />
+            <div className="absolute bottom-0 left-0 h-4 w-4 border-b-2 border-l-2 border-[#00ff00]/30" />
+            <div className="absolute bottom-0 right-0 h-4 w-4 border-b-2 border-r-2 border-[#00ff00]/30" />
           </button>
         </>
       )}
